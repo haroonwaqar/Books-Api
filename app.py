@@ -1,12 +1,12 @@
 from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
-from model import Book
+from model import db, Book
+import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost:5432/RestApiData'
+password = os.environ.get('POSTGRES_PASS')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:{password}@localhost:5432/RestApiData'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy()
 db.init_app(app)
 
 
