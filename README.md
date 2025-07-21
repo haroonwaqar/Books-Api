@@ -1,6 +1,6 @@
 # Flask Books REST API
 
-A simple and clean RESTful API built using **Flask**, **SQLAlchemy**, and **PostgreSQL**, with full CRUD functionality for managing books. Data is stored in a PostgreSQL database and can be viewed via pgAdmin.
+A simple and clean RESTful API built using **Flask**, **SQLAlchemy**, and **PostgreSQL**, with full CRUD functionality for managing books. Data is stored in a PostgreSQL database and can be viewed via pgAdmin. The requests are tested using Postman.
 
 ## Features
 
@@ -16,5 +16,4 @@ A simple and clean RESTful API built using **Flask**, **SQLAlchemy**, and **Post
 - **Backend:** Flask
 - **ORM:** SQLAlchemy
 - **Database:** PostgreSQL
-- **Admin Tool:** pgAdmin
 - **Language:** Python
