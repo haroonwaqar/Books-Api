@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from model import db, Book
+from utils.schemas import BookSchema, BookUpdateSchema
 import os
 
 app = Flask(__name__)
@@ -9,47 +10,73 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-
-@app.route('/books', methods=['POST'])
-def add_book():
-    data = request.get_json()
-    book = Book(title=data["title"], author=data["author"])
-    db.session.add(book)
-    db.session.commit()
-    return ('Book is added'), 201
+book_schema = BookSchema()
+books_schema = BookSchema(many=True)
+book_update_schema = BookUpdateSchema()
 
 
+#GET Request Functions
 @app.route('/books')
 def get_books():
     books = Book.query.all()
-    return jsonify([book.to_dict() for book in books])
-
+    if books:
+        return books_schema.dump(books)
+    else:
+        return {"message": "Not found"}, 404
+    
 
 @app.route('/books/<int:id>')
 def get_a_book(id):
     book = Book.query.filter_by(id=id).first()
     if book:
-        return jsonify(book.to_dict())
+        return book_schema.dump(book)
     else:
         return ('Book not found', 404)
+
+
+#POST Request Functions
+@app.route('/books', methods=['POST'])
+def add_book():
+    data = request.get_json()
+
+    errors = book_schema.validate(data)
+    if errors:
+        return jsonify(errors), 400 
+    
+    book = Book(title=data["title"], author=data["author"])
+    db.session.add(book)
+    db.session.commit()
+    return ('Book is added'), 201
     
 
+#PUT Request Functions
 @app.route('/books/<int:id>', methods=['PUT'])
 def update_book(id):
     data = request.get_json()
+
+    errors = book_schema.validate(data)
+    if errors:
+        return jsonify(errors), 400
+    
     book = Book.query.filter_by(id=id).first()
     if book:
         book.title = data["title"]
         book.author = data["author"]
         db.session.commit()
-        return jsonify(book.to_dict())
+        return book_schema.dump(book), 200
     else:
         return ('Book not found', 404)
     
 
+#PATCH Request Functions
 @app.route('/books/<int:id>', methods=['PATCH'])
 def patch_book(id):
     data = request.get_json()
+
+    errors = book_update_schema.validate(data)
+    if errors:
+        return jsonify(errors), 400
+    
     book = Book.query.filter_by(id=id).first()
     if book:
         if "title" in data:
@@ -57,11 +84,12 @@ def patch_book(id):
         if "author" in data:
             book.author = data["author"]
         db.session.commit()
-        return jsonify(book.to_dict())
+        return book_schema.dump(book), 200
     else:
         return ('Book not found', 404)
     
 
+#DELETE Request Functions
 @app.route('/books/<int:id>', methods=['DELETE'])
 def delete_book(id):
     book = Book.query.filter_by(id=id).first()
@@ -73,6 +101,7 @@ def delete_book(id):
         return ('Book not found', 404)
 
 
+#Running
 if __name__ == '__main__':
     with app.app_context():
         db.create_all() 
