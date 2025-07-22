@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang='eg'>
+<head>
+    
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        {% if title %}
+            <title>My Books - {{ title }}</title>
+        {% else %}
+            <title>My Books </title>
+        {% endif %}
+</head>
+<body>
+    <h1> Welcome to Books &#x1f4da; </h1>
+    <div>
+        <ul>
+        {% for book in books %}
+        
+            <li><h2>{{ book.title }} </h2></li>
+            {{ book.author }}
+            <div>&nbsp;</div>
+            <div>&nbsp;</div>
+        {% endfor %}
+        </ul>
+
+    </div>
+</body>
+</html>

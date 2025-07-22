@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from model import db, Book
 from utils.schemas import BookSchema, BookUpdateSchema
 import os
@@ -16,11 +16,12 @@ book_update_schema = BookUpdateSchema()
 
 
 #GET Request Functions
+@app.route('/')
 @app.route('/books')
 def get_books():
     books = Book.query.all()
     if books:
-        return books_schema.dump(books)
+        return render_template('home.html', books=books)
     else:
         return {"message": "Not found"}, 404
     
