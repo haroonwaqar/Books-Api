@@ -1,14 +1,16 @@
 from flask import Flask, jsonify, request, render_template
-from model import db, Book
+from pymongo import MongoClient
+from bson import ObjectId
+from bson.errors import InvalidId
 from utils.schemas import BookSchema, BookUpdateSchema
-import os
 
 app = Flask(__name__)
-password = os.environ.get('POSTGRES_PASS')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:{password}@localhost:5432/RestApiData'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db.init_app(app)
+# For mongo db setup locally
+client = MongoClient("mongodb://localhost:27017/")
+db = client['bookstore']
+books_collection = db['books']
+
 
 book_schema = BookSchema()
 books_schema = BookSchema(many=True)
@@ -19,20 +21,29 @@ book_update_schema = BookUpdateSchema()
 @app.route('/')
 @app.route('/books')
 def get_books():
-    books = Book.query.all()
-    if books:
-        return render_template('home.html', books=books)
+
+    books = list(books_collection.find())
+
+    if books:     
+        return jsonify(books_schema.dump(books)), 200
+        #return rendertemplate('home.html, books=books)
     else:
         return {"message": "Not found"}, 404
     
 
-@app.route('/books/<int:id>')
+@app.route('/books/<id>')
 def get_a_book(id):
-    book = Book.query.filter_by(id=id).first()
-    if book:
-        return book_schema.dump(book)
-    else:
-        return ('Book not found', 404)
+    
+    try:
+        book = books_collection.find_one({'_id': ObjectId(id)})
+
+        if book: 
+            return jsonify(book_schema.dump(book))
+        else:
+            return ('Book not found', 404)
+        
+    except InvalidId:
+        return {'error': 'Invalid book ID'}, 400
 
 
 #POST Request Functions
@@ -44,14 +55,16 @@ def add_book():
     if errors:
         return jsonify(errors), 400 
     
-    book = Book(title=data["title"], author=data["author"])
-    db.session.add(book)
-    db.session.commit()
-    return ('Book is added'), 201
+    results = books_collection.insert_one({
+        'title': data['title'],
+        'author': data['author']
+    })
+    
+    return jsonify({'id': str(results.inserted_id)}), 201
     
 
 #PUT Request Functions
-@app.route('/books/<int:id>', methods=['PUT'])
+@app.route('/books/<string:id>', methods=['PUT'])
 def update_book(id):
     data = request.get_json()
 
@@ -59,18 +72,20 @@ def update_book(id):
     if errors:
         return jsonify(errors), 400
     
-    book = Book.query.filter_by(id=id).first()
+    book = books_collection.find_one({'_id': ObjectId(id)})
     if book:
-        book.title = data["title"]
-        book.author = data["author"]
-        db.session.commit()
-        return book_schema.dump(book), 200
+        books_collection.update_one(
+            {'_id': ObjectId(id)},
+            {'$set': {"title": data["title"], "author": data["author"]}}
+        )
+        updated_book = books_collection.find_one({'_id': ObjectId(id)})
+        return jsonify(book_schema.dump(updated_book))
     else:
         return ('Book not found', 404)
     
 
 #PATCH Request Functions
-@app.route('/books/<int:id>', methods=['PATCH'])
+@app.route('/books/<id>', methods=['PATCH'])
 def patch_book(id):
     data = request.get_json()
 
@@ -78,33 +93,37 @@ def patch_book(id):
     if errors:
         return jsonify(errors), 400
     
-    book = Book.query.filter_by(id=id).first()
+    book = books_collection.find_one({'_id': ObjectId(id)})
     if book:
-        if "title" in data:
-            book.title = data["title"]
-        if "author" in data:
-            book.author = data["author"]
-        db.session.commit()
-        return book_schema.dump(book), 200
+        update_data = {}
+        if 'title' in data:
+            update_data['title'] = data['title']
+        if 'author' in data:
+            update_data['author'] = data['author']
+
+        books_collection.update_one({'_id': ObjectId(id)}, {'$set': update_data})
+
+        updated_book = books_collection.find_one({'_id': ObjectId(id)})
+        return jsonify(book_schema.dump(updated_book)), 200
+    
     else:
         return ('Book not found', 404)
     
 
 #DELETE Request Functions
-@app.route('/books/<int:id>', methods=['DELETE'])
+@app.route('/books/<string:id>', methods=['DELETE'])
 def delete_book(id):
-    book = Book.query.filter_by(id=id).first()
+
+    book = books_collection.find_one({'_id': ObjectId(id)} )
     if book:
-        db.session.delete(book)
-        db.session.commit()
+        books_collection.delete_one({'_id': ObjectId(id)})
         return ('The book has been deleted', 200)
-    else:
+
+    else: 
         return ('Book not found', 404)
 
 
 #Running
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all() 
     app.run(debug=True)
 
