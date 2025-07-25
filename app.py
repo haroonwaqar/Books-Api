@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request, render_template
 from pymongo import MongoClient
 from bson import ObjectId
-from bson.errors import InvalidId
 from utils.schemas import BookSchema, BookUpdateSchema
 
 app = Flask(__name__)
@@ -25,8 +24,9 @@ def get_books():
     books = list(books_collection.find())
 
     if books:     
-        return jsonify(books_schema.dump(books)), 200
-        #return rendertemplate('home.html, books=books)
+        #return jsonify(books_schema.dump(books)), 200
+        # for the frontend looks
+        return render_template('home.html', books=books)
     else:
         return {"message": "Not found"}, 404
     
@@ -34,16 +34,12 @@ def get_books():
 @app.route('/books/<id>')
 def get_a_book(id):
     
-    try:
-        book = books_collection.find_one({'_id': ObjectId(id)})
+    book = books_collection.find_one({'_id': ObjectId(id)})
 
-        if book: 
-            return jsonify(book_schema.dump(book))
-        else:
-            return ('Book not found', 404)
-        
-    except InvalidId:
-        return {'error': 'Invalid book ID'}, 400
+    if book: 
+        return jsonify(book_schema.dump(book))
+    else:
+        return ('Book not found', 404)
 
 
 #POST Request Functions
