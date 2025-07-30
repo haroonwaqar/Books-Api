@@ -12,17 +12,14 @@
 </head>
 <body>
     <h1> Welcome to Books &#x1f4da; </h1>
-    <div>
-        <ul>
+    <ul>
         {% for book in books %}
-        
-            <li><h2>{{ book.title }} </h2></li>
-            {{ book.author }}
-            <div>&nbsp;</div>
-            <div>&nbsp;</div>
+            <li class="book-item"> 
+                <span class="book-title"> {{ book.title }} </span>
+                <span class="book-author"> {{ book.author }} </span>
+            </li>
         {% endfor %}
-        </ul>
+    </ul>
 
-    </div>
 </body>
 </html>
