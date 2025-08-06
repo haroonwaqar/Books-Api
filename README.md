@@ -13,7 +13,7 @@ A simple and clean RESTful API built using **Flask**, **PyMongo**, and **MongoDB
 
 ## Tech Stack
 
-- **Backend:** Flask
-- **ORM:** PyMongo
-- **Database:** MongoDB
-- **Language:** Python
+- Backend: Flask
+- ORM: PyMongo
+- Database: MongoDB
+- Language: Python
