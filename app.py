@@ -36,8 +36,9 @@ def get_a_book(id):
     
     book = books_collection.find_one({'_id': ObjectId(id)})
 
-    if book: 
-        return jsonify(book_schema.dump(book))
+    if book:
+        return render_template('single_book.html', book=book)
+        #return jsonify(book_schema.dump(book))
     else:
         return ('Book not found', 404)
 
