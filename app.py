@@ -44,9 +44,13 @@ def get_a_book(id):
 
 
 #POST Request Functions
-@app.route('/books', methods=['POST'])
+@app.route('/books/', methods=['POST'])
 def add_book():
     data = request.get_json()
+    # data = {
+    #     title = title,
+    #     author = author
+    # }
 
     errors = book_schema.validate(data)
     if errors:
